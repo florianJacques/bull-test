@@ -14,15 +14,16 @@ async function bootstrap() {
   // Récupérer la queue (C'est pute mais ça fonctionne)
   const queueTestFlo = app.get<Queue>(getQueueToken('queue-test-flo'));
 
-  //On créé le board, et je récupère juste le router Express
+  //On créé le board
+  // NB: on pourais le foutre dans un provider car il expose des function ppour ajouter des queue dynamiquement
   const serverAdapter = new ExpressAdapter();
-  const board = createBullBoard({
+  createBullBoard({
     queues: [
       new BullAdapter(queueTestFlo),
     ],
     serverAdapter: serverAdapter,
   });
-  
+
   // J'add la route et en avant
   serverAdapter.setBasePath('/bull');
   app.use('/bull', serverAdapter.getRouter());

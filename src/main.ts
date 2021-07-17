@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { createBullBoard } from 'bull-board';
-import { BullAdapter } from 'bull-board/bullAdapter';
 import { Queue } from 'bull';
 import { getQueueToken } from '@nestjs/bull';
+
+import { createBullBoard } from '@bull-board/api';
+import { BullAdapter } from '@bull-board/api/bullAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 
 async function bootstrap() {
 
@@ -12,13 +14,18 @@ async function bootstrap() {
   // Récupérer la queue (C'est pute mais ça fonctionne)
   const queueTestFlo = app.get<Queue>(getQueueToken('queue-test-flo'));
 
-  //O n créé le board, et je récupère juste le router Express
-  const { router: bullRouter } = createBullBoard([
-    new BullAdapter(queueTestFlo),
-  ]);
-
+  //On créé le board, et je récupère juste le router Express
+  const serverAdapter = new ExpressAdapter();
+  const board = createBullBoard({
+    queues: [
+      new BullAdapter(queueTestFlo),
+    ],
+    serverAdapter: serverAdapter,
+  });
+  
   // J'add la route et en avant
-  app.use('/test-dashboard', bullRouter);
+  serverAdapter.setBasePath('/bull');
+  app.use('/bull', serverAdapter.getRouter());
   app.listen(3009);
 }
 
